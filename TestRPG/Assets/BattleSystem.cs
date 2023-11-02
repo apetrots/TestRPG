@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,9 +13,11 @@ public class BattleSystem : MonoBehaviour
 
 	bool acceptPlayerAction = false;
 
-	bool moving = false;
-	BattleUnit from;
-	BattleTile to;
+	// for moving
+	bool selectingUnit = false;
+	bool selectingTile = false;
+	BattleUnit selectedUnit;
+	BattleTile selectedTile;
 
 	int currentTurn;
 	// we can handle this more elegantly with changing turn order
@@ -45,39 +48,90 @@ public class BattleSystem : MonoBehaviour
 
 	IEnumerator RunBattle()
 	{
-		acceptPlayerAction = true;
+		acceptPlayerAction = false;
 		dialogueText.text = "Uh...";
-		yield return new WaitForSeconds(1f);
+		yield return new WaitForSeconds(0.5f);
 		dialogueText.text = "Uh... Oh...";
-		yield return new WaitForSeconds(1f);
+		yield return new WaitForSeconds(0.5f);
 		dialogueText.text = "Uhoh...";
 		dialogueText.fontStyle = FontStyle.Bold;
+		yield return new WaitForSeconds(1f);
+		dialogueText.text = "Select an action...";
+		dialogueText.fontStyle = FontStyle.Normal;
+		acceptPlayerAction = true;
 	}
 
-	IEnumerator PlayerMove()
+	IEnumerator MoveUnit(BattleUnit unit, BattleTile to)
 	{
-		dialogueText.fontStyle = FontStyle.Normal;
-		dialogueText.text = "Select a unit to move...";
-
-		moving = true;
+		dialogueText.text = "Moving the unit...";
+		yield return new WaitForSeconds(0.25f);
+		unit.gridPosition = to.GridPosition;
 		
-		yield return new WaitForSeconds(1f);
+		unit.GetComponent<SpriteRenderer>().color = Color.white;
+		to.GetComponent<SpriteRenderer>().color = Color.white;
+
+		yield return new WaitForSeconds(3.0f);
 	}
 
 	void Update()
 	{
 		UpdateUnits();
 
-		if (moving && Input.GetMouseButtonDown(0))
+		if (selectingUnit)
+		{
+			dialogueText.fontStyle = FontStyle.Normal;
+			dialogueText.text = "Select a unit to move...";
+
+			if (selectedUnit != null)
+			{
+				selectedUnit.GetComponent<SpriteRenderer>().color = Color.red;
+				selectingUnit = false;
+				selectingTile = true;
+			}
+		}
+
+		if (selectingTile)
+		{
+			dialogueText.fontStyle = FontStyle.Normal;
+			dialogueText.text = "Select a tile to move to...";
+
+			if (selectedTile != null)
+			{
+				selectedTile.GetComponent<SpriteRenderer>().color = Color.red;
+				selectingTile = false;
+
+				StartCoroutine(MoveUnit(selectedUnit, selectedTile));
+			}
+		}
+
+		if ((selectingUnit || selectingTile) && Input.GetMouseButtonDown(0))
 		{
 			Vector3 clickPos = Camera.main.ScreenToWorldPoint (Input.mousePosition);
-			print(clickPos);
 
-            RaycastHit2D hit = Physics2D.Raycast(new Vector2(clickPos.x, clickPos.y), Vector2.zero);
-            if (hit.collider != null)
-            {
-                Debug.Log(hit.collider.gameObject.name);
-            }
+			// move these variables somewhere else...
+			ContactFilter2D filter = new ContactFilter2D();
+            RaycastHit2D[] hits = new RaycastHit2D[8];
+
+            Physics2D.Raycast(new Vector2(clickPos.x, clickPos.y), Vector2.zero, filter, hits);
+			foreach (RaycastHit2D hit in hits)
+			{
+				if (hit.collider == null)
+					continue;
+
+				var unit = hit.collider.GetComponent<BattleUnit>();
+				if (selectingUnit && unit != null)
+				{
+					selectedUnit = unit;
+					break;
+				}
+
+				var tile = hit.collider.GetComponent<BattleTile>();
+				if (selectingTile && tile != null)
+				{
+					selectedTile = tile;
+					break;
+				}
+			}
 		}
 	}
 
@@ -106,7 +160,9 @@ public class BattleSystem : MonoBehaviour
 		if (!acceptPlayerAction)
 			return;
 
-		StartCoroutine(PlayerMove());
+		selectedUnit = null;
+		selectedTile = null;
+		selectingUnit = true;
 	}
 
 
