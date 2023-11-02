@@ -17,9 +17,54 @@ public class BattleGrid : MonoBehaviour
     [SerializeField]
     BattleTileType[] tiles = new BattleTileType[18];
 
+    [SerializeField] [HideInInspector]
     List<BattleTile> tileObjects;
 
     bool shouldUpdateTiles = false;
+
+    void Start()
+    {
+        if (tileObjects == null)
+        {
+            tileObjects = new List<BattleTile>();
+        }
+        UpdateTiles();
+    }
+
+
+    void Update()
+    {
+        if (shouldUpdateTiles)
+        {
+            UpdateTiles();
+            shouldUpdateTiles = false;
+        }
+    }
+
+    // "Editor-only function that Unity calls when the script is loaded or a value changes in the Inspector." 
+    void OnValidate()
+    {
+        shouldUpdateTiles = true;
+    }
+
+    public BattleTile GetTile(Vector2Int gridPos)
+    {
+        if (gridPos.x < 0 || gridPos.x >= Columns || gridPos.y < 0 || gridPos.y >= Rows)
+            return null;
+
+        int idx = gridPos.y * Columns + gridPos.x;
+
+        return tileObjects[idx];
+    }
+
+    public Vector3 GridToWorldPoint(Vector2Int pos)
+    {
+        return transform.TransformPoint(new Vector3(
+                ((float)pos.x - (Columns-1) * 0.5f) * HorizontalSpacing,
+                ((float)pos.y - (Rows-1) * 0.5f) * VerticalSpacing,
+                0.0f
+            ));
+    }
 
     // Create or delete tiles based on current size while setting
     // tile types for each BattleTile
@@ -58,7 +103,7 @@ public class BattleGrid : MonoBehaviour
                 DestroyImmediate(tileObjects[tileObjects.Count - 1].gameObject);
             else
                 Destroy(tileObjects[tileObjects.Count - 1].gameObject);
-                
+
             tileObjects.RemoveAt(tileObjects.Count - 1);
         }
         
@@ -91,26 +136,5 @@ public class BattleGrid : MonoBehaviour
             if (i < tiles.Length)
                 tileObjects[i].TileType = tiles[i]; 
         }
-    }
-
-    void Start()
-    {
-        tileObjects = new List<BattleTile>();
-        UpdateTiles();
-    }
-
-    void Update()
-    {
-        if (shouldUpdateTiles)
-        {
-            UpdateTiles();
-            shouldUpdateTiles = false;
-        }
-    }
-
-    // "Editor-only function that Unity calls when the script is loaded or a value changes in the Inspector." 
-    void OnValidate()
-    {
-        shouldUpdateTiles = true;
     }
 }

@@ -1,12 +1,114 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum BattleState { START, PLAYERTURN, ENEMYTURN, WON, LOST }
-
 public class BattleSystem : MonoBehaviour
 {
+	public BattleGrid battleGrid;
+	
+	public Text dialogueText;
+
+	bool acceptPlayerAction = false;
+
+	bool moving = false;
+	BattleUnit from;
+	BattleTile to;
+
+	int currentTurn;
+	// we can handle this more elegantly with changing turn order
+	// for now currentTurn is an index into the 'units' list, who's
+	// order is simply the turn order for now 
+	List<BattleUnit> units;
+
+	// this is a singleton structure
+	public static BattleSystem main;
+
+	void Start()
+	{
+		// if there's already a BattleSystem object instantiated 
+		// (and thus was set to 'main' **static** variable),
+		// delete this one
+		if (main != null)
+		{
+			Destroy(gameObject);
+			return;
+		}	
+		else
+			main = this;
+
+		units = new List<BattleUnit>(FindObjectsByType<BattleUnit>(FindObjectsSortMode.None));
+
+		StartCoroutine(RunBattle());
+	}
+
+	IEnumerator RunBattle()
+	{
+		acceptPlayerAction = true;
+		dialogueText.text = "Uh...";
+		yield return new WaitForSeconds(1f);
+		dialogueText.text = "Uh... Oh...";
+		yield return new WaitForSeconds(1f);
+		dialogueText.text = "Uhoh...";
+		dialogueText.fontStyle = FontStyle.Bold;
+	}
+
+	IEnumerator PlayerMove()
+	{
+		dialogueText.fontStyle = FontStyle.Normal;
+		dialogueText.text = "Select a unit to move...";
+
+		moving = true;
+		
+		yield return new WaitForSeconds(1f);
+	}
+
+	void Update()
+	{
+		UpdateUnits();
+
+		if (moving && Input.GetMouseButtonDown(0))
+		{
+			Vector3 clickPos = Camera.main.ScreenToWorldPoint (Input.mousePosition);
+			print(clickPos);
+
+            RaycastHit2D hit = Physics2D.Raycast(new Vector2(clickPos.x, clickPos.y), Vector2.zero);
+            if (hit.collider != null)
+            {
+                Debug.Log(hit.collider.gameObject.name);
+            }
+		}
+	}
+
+	void UpdateUnits()
+	{
+		foreach (BattleUnit unit in units)
+		{
+			BattleTile tile = battleGrid.GetTile(unit.gridPosition);
+			if (tile == null)
+				Debug.LogWarning("Grid position " + unit.gridPosition + " doesn't exist/out of bounds of BattleGrid");
+			else
+				unit.transform.position = tile.transform.position;
+		}
+	}
+
+	public void OnAttackButton()
+	{
+		if (!acceptPlayerAction)
+			return;
+
+		// StartCoroutine(PlayerAttack());
+	}
+
+	public void OnMoveButton()
+	{
+		if (!acceptPlayerAction)
+			return;
+
+		StartCoroutine(PlayerMove());
+	}
+
 
 	// Unit playerUnit;
 	// Unit enemyUnit;
