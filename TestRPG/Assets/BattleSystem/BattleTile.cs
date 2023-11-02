@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteAlways]
 [RequireComponent(typeof(SpriteRenderer))]
 public class BattleTile : MonoBehaviour
 {
@@ -49,7 +50,10 @@ public class BattleTile : MonoBehaviour
     void UpdateComponents()
     {
         if (type == null)
+        {
+            gameObject.name = gridPos.ToString();
             return;
+        }
         
         // set name from tile type name
         gameObject.name = gridPos.ToString() + " " + type.name;

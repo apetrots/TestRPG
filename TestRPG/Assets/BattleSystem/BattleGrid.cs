@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 
+[ExecuteAlways]
 public class BattleGrid : MonoBehaviour
 {
     [SerializeField]
@@ -16,7 +17,7 @@ public class BattleGrid : MonoBehaviour
     [SerializeField]
     BattleTileType[] tiles = new BattleTileType[18];
 
-    List<BattleTile> tileObjects = new List<BattleTile>();
+    List<BattleTile> tileObjects;
 
     bool shouldUpdateTiles = false;
 
@@ -49,14 +50,29 @@ public class BattleGrid : MonoBehaviour
         {
             // Because they are a GameObject that we're "managing"
             // with this BattleGrid class, we need to destroy it
-            // from the Unity scene... 
-            Destroy(tileObjects[tileObjects.Count - 1].gameObject);
+            // from the Unity scene...
+            
+            // The reason I use DestroyImmediate instead of Destroy
+            // when in edit mode is because Unity told me to :D 
+            if (!Application.isPlaying)
+                DestroyImmediate(tileObjects[tileObjects.Count - 1].gameObject);
+            else
+                Destroy(tileObjects[tileObjects.Count - 1].gameObject);
+                
             tileObjects.RemoveAt(tileObjects.Count - 1);
         }
         
         // re-position to grid
         for (int i = 0; i < tileObjects.Count; i++)
         {
+            // if the tile object was deleted at some point for some reason
+            if (tileObjects[i] == null)
+            {
+                GameObject newObj = Instantiate(prefabTile.gameObject, Vector2.zero, Quaternion.identity, transform);
+
+                tileObjects[i] = newObj.GetComponent<BattleTile>();
+            }
+
             // grid position 
             Vector2Int gridPos = new Vector2Int(
                 i % Columns, 
@@ -79,6 +95,7 @@ public class BattleGrid : MonoBehaviour
 
     void Start()
     {
+        tileObjects = new List<BattleTile>();
         UpdateTiles();
     }
 

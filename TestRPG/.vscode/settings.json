@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "TestRPG.sln"
+    "dotnet.defaultSolution": "TestRPG.sln",
+    "discord.enabled": false
 }
