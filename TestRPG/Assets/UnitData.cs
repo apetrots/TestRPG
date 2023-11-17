@@ -8,15 +8,7 @@ public enum UnitClass
 
 }
 
-// temporary, I don't think I want abilities to be defined in this file 
-// or as an enum...
-public enum UnitAbility
-{
-	Fireball,
-	Tackle
-}
-
-[CreateAssetMenu(fileName = "Unit", menuName = "General RPG/Unit", order = 0)]
+[CreateAssetMenu(fileName = "Unit", menuName = "Battle System/Unit Data", order = 0)]
 public class UnitData : ScriptableObject
 {
     public int Level;
@@ -24,7 +16,7 @@ public class UnitData : ScriptableObject
 	public int MaxHP;
 	public int Strength;
 
-	public UnitAbility[] abilities;
+	public ActiveAbility[] abilities;
 
 	// will eventually be a whole animator...
 	public Sprite sprite;

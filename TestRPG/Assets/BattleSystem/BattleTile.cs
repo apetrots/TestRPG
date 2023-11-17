@@ -8,6 +8,8 @@ public class BattleTile : MonoBehaviour
 {
     public Status[] statuses;
 
+    public BattleUnit unit;
+
     Vector2Int gridPos;
     SpriteRenderer rend;
     BattleTileType type;
@@ -66,6 +68,17 @@ public class BattleTile : MonoBehaviour
 
     void Update()
     {
+        if (unit && unit.tile && unit.tile != this)
+        {
+            unit = null;
+        }
+
+        if (unit)
+        {
+            unit.tile = this;
+            unit.transform.position = transform.position;
+        }
+
         // if tile type was set externally (i.e. by BattleGrid)
         // then update things...
         if (shouldUpdateComponents)

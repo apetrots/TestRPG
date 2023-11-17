@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-[CreateAssetMenu(fileName = "Tile", menuName = "BattleSystem/BattleTileType", order = 1)]
+[CreateAssetMenu(fileName = "Tile", menuName = "Battle System/BattleTileType", order = 1)]
 public class BattleTileType : ScriptableObject
 {
     public string typeName;

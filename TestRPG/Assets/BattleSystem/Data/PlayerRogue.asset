@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1fa0f07b0e68a81458684e716df8cfd0, type: 3}
-  m_Name: PlayerMage
+  m_Name: PlayerRogue
   m_EditorClassIdentifier: 
-  Level: 11
-  Damage: 5
-  MaxHP: 100
-  Strength: 3
-  abilities: 01000000
-  sprite: {fileID: -1130856163, guid: cce19839838a01b40b0e06d45062dea9, type: 3}
+  Level: 0
+  Damage: 0
+  MaxHP: 0
+  Strength: 0
+  abilities: 
+  sprite: {fileID: 29545888, guid: 61a3818718d346847a078e7bdde63abc, type: 3}

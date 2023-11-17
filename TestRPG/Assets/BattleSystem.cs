@@ -56,17 +56,34 @@ public class BattleSystem : MonoBehaviour
 		dialogueText.text = "Uhoh...";
 		dialogueText.fontStyle = FontStyle.Bold;
 		yield return new WaitForSeconds(1f);
-		dialogueText.text = "Select an action...";
-		dialogueText.fontStyle = FontStyle.Normal;
-		acceptPlayerAction = true;
+		
+		StartCoroutine(UnitTurn(units[currentTurn]));
+	}
+
+	IEnumerator UnitTurn(BattleUnit unit)
+	{
+		if (unit.playerControlled)
+		{
+			dialogueText.text = "Select an action...";
+			dialogueText.fontStyle = FontStyle.Normal;
+			acceptPlayerAction = true;
+		}
+
+		yield return new WaitForSeconds(0.1f);
 	}
 
 	IEnumerator MoveUnit(BattleUnit unit, BattleTile to)
 	{
 		dialogueText.text = "Moving the unit...";
 		yield return new WaitForSeconds(0.25f);
-		unit.gridPosition = to.GridPosition;
 		
+		BattleTile oldTile = unit.tile;
+		if (oldTile)
+			oldTile.unit = null;
+
+		unit.tile = to;
+		to.unit = unit;
+
 		unit.GetComponent<SpriteRenderer>().color = Color.white;
 		to.GetComponent<SpriteRenderer>().color = Color.white;
 
@@ -95,7 +112,7 @@ public class BattleSystem : MonoBehaviour
 			dialogueText.fontStyle = FontStyle.Normal;
 			dialogueText.text = "Select a tile to move to...";
 
-			if (selectedTile != null)
+			if (selectedTile != null && selectedTile.unit == null)
 			{
 				selectedTile.GetComponent<SpriteRenderer>().color = Color.red;
 				selectingTile = false;
@@ -137,14 +154,6 @@ public class BattleSystem : MonoBehaviour
 
 	void UpdateUnits()
 	{
-		foreach (BattleUnit unit in units)
-		{
-			BattleTile tile = battleGrid.GetTile(unit.gridPosition);
-			if (tile == null)
-				Debug.LogWarning("Grid position " + unit.gridPosition + " doesn't exist/out of bounds of BattleGrid");
-			else
-				unit.transform.position = tile.transform.position;
-		}
 	}
 
 	public void OnAttackButton()
