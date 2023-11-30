@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -56,20 +57,34 @@ public class BattleSystem : MonoBehaviour
 		dialogueText.text = "Uhoh...";
 		dialogueText.fontStyle = FontStyle.Bold;
 		yield return new WaitForSeconds(1f);
-		
-		StartCoroutine(UnitTurn(units[currentTurn]));
-	}
 
-	IEnumerator UnitTurn(BattleUnit unit)
-	{
-		if (unit.playerControlled)
+		while (true)
 		{
-			dialogueText.text = "Select an action...";
-			dialogueText.fontStyle = FontStyle.Normal;
-			acceptPlayerAction = true;
-		}
+			BattleUnit unit = units[currentTurn];
 
-		yield return new WaitForSeconds(0.1f);
+			dialogueText.text = unit.name + "'s turn...";
+			dialogueText.fontStyle = FontStyle.Normal;
+			yield return new WaitForSeconds(0.5f);
+
+			if (unit.playerControlled)
+			{
+				dialogueText.text = "Select an action...";
+				dialogueText.fontStyle = FontStyle.Normal;
+				acceptPlayerAction = true;
+				selectedUnit = unit;
+				yield return new WaitUntil(() => !acceptPlayerAction);
+			}
+			else
+			{
+				dialogueText.text = unit.name + " attacks!";
+				dialogueText.fontStyle = FontStyle.Normal;
+				yield return new WaitForSeconds(1.0f);
+			}
+
+			currentTurn = (currentTurn + 1) % units.Count;
+
+			yield return new WaitForSeconds(0.1f);
+		}
 	}
 
 	IEnumerator MoveUnit(BattleUnit unit, BattleTile to)
@@ -87,39 +102,19 @@ public class BattleSystem : MonoBehaviour
 		unit.GetComponent<SpriteRenderer>().color = Color.white;
 		to.GetComponent<SpriteRenderer>().color = Color.white;
 
-		yield return new WaitForSeconds(3.0f);
+		yield return new WaitForSeconds(1.0f);
+		
+		acceptPlayerAction = false;
 	}
 
 	void Update()
 	{
 		UpdateUnits();
 
-		if (selectingUnit)
-		{
-			dialogueText.fontStyle = FontStyle.Normal;
-			dialogueText.text = "Select a unit to move...";
-
-			if (selectedUnit != null)
-			{
-				selectedUnit.GetComponent<SpriteRenderer>().color = Color.red;
-				selectingUnit = false;
-				selectingTile = true;
-			}
-		}
-
-		if (selectingTile)
-		{
-			dialogueText.fontStyle = FontStyle.Normal;
-			dialogueText.text = "Select a tile to move to...";
-
-			if (selectedTile != null && selectedTile.unit == null)
-			{
-				selectedTile.GetComponent<SpriteRenderer>().color = Color.red;
-				selectingTile = false;
-
-				StartCoroutine(MoveUnit(selectedUnit, selectedTile));
-			}
-		}
+		if (selectedUnit)
+			selectedUnit.GetComponent<SpriteRenderer>().color = Color.red;
+		if (selectedTile)
+			selectedTile.GetComponent<SpriteRenderer>().color = Color.red;
 
 		if ((selectingUnit || selectingTile) && Input.GetMouseButtonDown(0))
 		{
@@ -150,6 +145,38 @@ public class BattleSystem : MonoBehaviour
 				}
 			}
 		}
+
+		if (selectingUnit)
+		{
+			dialogueText.fontStyle = FontStyle.Normal;
+			dialogueText.text = "Select a unit to move...";
+
+			if (selectedUnit != null)
+			{
+				selectingUnit = false;
+				selectingTile = true;
+			}
+		}
+
+		if (selectingTile)
+		{
+			dialogueText.fontStyle = FontStyle.Normal;
+			dialogueText.text = "Select a tile to move to...";
+
+			if (selectedTile != null && selectedTile.unit == null)
+			{
+				selectedTile.GetComponent<SpriteRenderer>().color = Color.red;
+				selectingTile = false;
+
+				StartCoroutine(MoveUnit(selectedUnit, selectedTile));
+				selectedUnit = null;
+				selectedTile = null;
+			}
+			else
+			{
+				selectedTile = null;
+			}
+		}
 	}
 
 	void UpdateUnits()
@@ -169,135 +196,22 @@ public class BattleSystem : MonoBehaviour
 		if (!acceptPlayerAction)
 			return;
 
-		selectedUnit = null;
+		selectedUnit = units[currentTurn];
 		selectedTile = null;
-		selectingUnit = true;
+		selectingUnit = false;
+		selectingTile = true;
 	}
 
+	public void OnAbilityButton()
+	{
+		if (!acceptPlayerAction)
+			return;
 
-	// Unit playerUnit;
-	// Unit enemyUnit;
+		selectedUnit.stats.abilities
+		selectedTile = null;
+		selectingUnit = false;
+		selectingTile = true;
+	}
 
-	// public Text dialogueText;
-
-	// public BattleHUD playerHUD;
-	// public BattleHUD enemyHUD;
-
-	// public BattleState state;
-
-    // // Start is called before the first frame update
-    // void Start()
-    // {
-	// 	state = BattleState.START;
-	// 	StartCoroutine(SetupBattle());
-    // }
-
-	// IEnumerator SetupBattle()
-	// {
-	// 	GameObject playerGO = Instantiate(playerPrefab, playerBattleStation);
-	// 	playerUnit = playerGO.GetComponent<Unit>();
-
-	// 	GameObject enemyGO = Instantiate(enemyPrefab, enemyBattleStation);
-	// 	enemyUnit = enemyGO.GetComponent<Unit>();
-
-	// 	dialogueText.text = "A wild " + enemyUnit.unitName + " approaches...";
-
-	// 	playerHUD.SetHUD(playerUnit);
-	// 	enemyHUD.SetHUD(enemyUnit);
-
-	// 	yield return new WaitForSeconds(2f);
-
-	// 	state = BattleState.PLAYERTURN;
-	// 	PlayerTurn();
-	// }
-
-	// IEnumerator PlayerAttack()
-	// {
-	// 	bool isDead = enemyUnit.TakeDamage(playerUnit.damage);
-
-	// 	enemyHUD.SetHP(enemyUnit.currentHP);
-	// 	dialogueText.text = "The attack is successful!";
-
-	// 	yield return new WaitForSeconds(2f);
-
-	// 	if(isDead)
-	// 	{
-	// 		state = BattleState.WON;
-	// 		EndBattle();
-	// 	} else
-	// 	{
-	// 		state = BattleState.ENEMYTURN;
-	// 		StartCoroutine(EnemyTurn());
-	// 	}
-	// }
-
-	// IEnumerator EnemyTurn()
-	// {
-	// 	dialogueText.text = enemyUnit.unitName + " attacks!";
-
-	// 	yield return new WaitForSeconds(1f);
-
-	// 	bool isDead = playerUnit.TakeDamage(enemyUnit.damage);
-
-	// 	playerHUD.SetHP(playerUnit.currentHP);
-
-	// 	yield return new WaitForSeconds(1f);
-
-	// 	if(isDead)
-	// 	{
-	// 		state = BattleState.LOST;
-	// 		EndBattle();
-	// 	} else
-	// 	{
-	// 		state = BattleState.PLAYERTURN;
-	// 		PlayerTurn();
-	// 	}
-
-	// }
-
-	// void EndBattle()
-	// {
-	// 	if(state == BattleState.WON)
-	// 	{
-	// 		dialogueText.text = "You won the battle!";
-	// 	} else if (state == BattleState.LOST)
-	// 	{
-	// 		dialogueText.text = "You were defeated.";
-	// 	}
-	// }
-
-	// void PlayerTurn()
-	// {
-	// 	dialogueText.text = "Choose an action:";
-	// }
-
-	// IEnumerator PlayerHeal()
-	// {
-	// 	playerUnit.Heal(5);
-
-	// 	playerHUD.SetHP(playerUnit.currentHP);
-	// 	dialogueText.text = "You feel renewed strength!";
-
-	// 	yield return new WaitForSeconds(2f);
-
-	// 	state = BattleState.ENEMYTURN;
-	// 	StartCoroutine(EnemyTurn());
-	// }
-
-	// public void OnAttackButton()
-	// {
-	// 	if (state != BattleState.PLAYERTURN)
-	// 		return;
-
-	// 	StartCoroutine(PlayerAttack());
-	// }
-
-	// public void OnHealButton()
-	// {
-	// 	if (state != BattleState.PLAYERTURN)
-	// 		return;
-
-	// 	StartCoroutine(PlayerHeal());
-	// }
 
 }
